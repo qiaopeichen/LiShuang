@@ -8,6 +8,7 @@
     tools:context="com.example.qiaopc.lishuang.MainActivity">
 
     <LinearLayout
+        android:layout_marginTop="20dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -16,6 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="姓名："
+            android:textColor="#000000"
             android:textSize="20sp" />
 
         <EditText
@@ -26,6 +28,8 @@
     </LinearLayout>
 
     <LinearLayout
+        android:layout_marginBottom="20dp"
+
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -35,14 +39,15 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/tv_name"
             android:text="电话："
+            android:textColor="#000000"
             android:textSize="20sp" />
 
         <EditText
             android:id="@+id/et_phone"
             android:layout_width="match_parent"
-
             android:layout_height="wrap_content"
-            android:hint="请输入电话号码" />
+            android:hint="请输入电话号码"
+            android:inputType="phone" />
     </LinearLayout>
 
     <LinearLayout
@@ -55,28 +60,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:textColor="#ffffff"
+            android:background="#000000"
             android:text="insert" />
-        <Button
-            android:id="@+id/btn_delete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="delete" />
-        <Button
-            android:id="@+id/btn_query"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="query" />
-        <Button
-            android:id="@+id/btn_update"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="update" />
     </LinearLayout>
 
     <ListView
+        android:layout_marginTop="10dp"
         android:id="@+id/lv_data"
         android:layout_width="match_parent"
         android:layout_height="match_parent"></ListView>

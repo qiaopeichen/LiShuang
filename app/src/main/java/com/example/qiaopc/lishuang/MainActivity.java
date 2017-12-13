@@ -1,91 +1,111 @@
 package com.example.qiaopc.lishuang;
 
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import java.util.ArrayList;
+import com.example.qiaopc.database.dao.PersonDao;
+import com.example.qiaopc.database.domain.PersonInfo;
+
 import java.util.List;
-import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private EditText et_name;
     private Button btn_insert;
-    private Button btn_delete;
-    private Button btn_query;
-    private Button btn_update;
+
     private ListView lv_data;
     private String mname;
-    private int mphone;
-    private ArrayList<Map> mdataList;
-    Map<String, Integer> person;
-    private  MyAdapter mAdapter;
+    private String mphone;
+    private List<PersonInfo> mPersonList;
+    private MyAdapter mAdapter;
     private EditText et_phone;
+
+    private PersonDao mDao;
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (mAdapter == null) {
+                mAdapter = new MyAdapter();
+                lv_data.setAdapter(mAdapter);
+            } else {
+                mAdapter.notifyDataSetChanged();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mnameList = new ArrayList<>();
+        Window window = getWindow();
+        //设置透明状态栏,这样才能让 ContentView 向上
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+
+        //需要设置这个 flag 才能调用 setStatusBarColor 来设置状态栏颜色
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
+
 
         initView();
-
-
+        initData();
 
         btn_insert.setOnClickListener(this);
-        btn_delete.setOnClickListener(this);
-        btn_query.setOnClickListener(this);
-        btn_update.setOnClickListener(this);
+
+    }
+
+    private void initData() {
+        new Thread() {
+            public void run() {
+                mDao = PersonDao.getInstance(getApplicationContext());
+                mPersonList = mDao.findAll();
+                mHandler.sendEmptyMessage(0);
+            }
+        }.start();
     }
 
     private void initView() {
         et_name = findViewById(R.id.et_name);
         et_phone = findViewById(R.id.et_phone);
         btn_insert = findViewById(R.id.btn_insert);
-        btn_delete = findViewById(R.id.btn_delete);
-        btn_query = findViewById(R.id.btn_query);
-        btn_update = findViewById(R.id.btn_update);
         lv_data = findViewById(R.id.lv_data);
-        mAdapter = new MyAdapter();
-        lv_data.setAdapter(mAdapter);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_insert:
-                insert();
-                break;
-            case R.id.btn_delete:
                 mname = et_name.getText().toString().trim();
-                if (null != mname) {
-                    mnameList.remove(mname);
-                    mAdapter.notifyDataSetChanged();
+                mphone = et_phone.getText().toString().trim();
+                if (!TextUtils.isEmpty(mname) && !TextUtils.isEmpty(mphone)) {
+                    mDao.insert(mname, mphone);
+                    PersonInfo personInfo = new PersonInfo();
+                    personInfo.name = mname;
+                    personInfo.phone = mphone;
+                    mPersonList.add(0, personInfo);
+                    if (mAdapter != null) {
+                        mAdapter.notifyDataSetChanged();
+                    }
+                } else {
+                    Toast.makeText(getApplicationContext(), "请输入姓名或电话号码", Toast.LENGTH_SHORT).show();
                 }
                 break;
-            case R.id.btn_query:
-                break;
-            case R.id.btn_update:
-                break;
-        }
-    }
-
-    private void insert() {
-        mname = et_name.getText().toString().trim();
-        mphone = et_phone.getText().toString().trim();
-        if (null != mname && null != mphone) {
-            person.put(et_name, et_phone);
-            mdataList.add(person);
-
-            mAdapter.notifyDataSetChanged();
         }
     }
 
@@ -93,12 +113,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public int getCount() {
-            return mnameList.size();
+            return mPersonList.size();
         }
 
         @Override
         public Object getItem(int position) {
-            return mnameList.get(position);
+            return mPersonList.get(position);
         }
 
         @Override
@@ -107,20 +127,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, ViewGroup parent) {
             ViewHolder holder = null;
 
             if (convertView == null) {
                 convertView = View.inflate(getApplicationContext(), R.layout.listview_name_item, null);
                 holder = new ViewHolder();
                 holder.tv_name = convertView.findViewById(R.id.tv_name);
+                holder.tv_phone = convertView.findViewById(R.id.tv_phone);
+                holder.btn_delete = convertView.findViewById(R.id.btn_delete);
                 convertView.setTag(holder);
             } else {
-                holder =(ViewHolder) convertView.getTag();
+                holder = (ViewHolder) convertView.getTag();
             }
 
-            holder.tv_name.setText(mnameList.get(position));
-            holder.tv_phone.setText();
+            holder.btn_delete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mDao.delete(mPersonList.get(position).name);
+                    mPersonList.remove(position);
+                    if (mAdapter != null) {
+                        mAdapter.notifyDataSetChanged();
+                    }
+                    Toast.makeText(getApplicationContext(), "删除成功", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            holder.tv_name.setText(mPersonList.get(position).name);
+            holder.tv_phone.setText(mPersonList.get(position).phone);
+
             return convertView;
         }
     }
@@ -128,6 +163,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     static class ViewHolder {
         TextView tv_name;
         TextView tv_phone;
+        Button btn_delete;
     }
-
 }
