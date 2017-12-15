@@ -24,7 +24,7 @@
             android:id="@+id/et_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="请输入姓名" />
+            android:hint="请输入姓名-。-" />
     </LinearLayout>
 
     <LinearLayout
